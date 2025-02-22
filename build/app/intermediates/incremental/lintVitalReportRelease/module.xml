@@ -1,0 +1,18 @@
+<lint-module
+    format="1"
+    dir="/Users/vedeekaparab/Desktop/player_collector/android/app"
+    name=":app"
+    type="APP"
+    maven="android:app:"
+    agpVersion="8.1.0"
+    buildFolder="/Users/vedeekaparab/Desktop/player_collector/build/app"
+    bootClassPath="/Users/vedeekaparab/Library/Android/sdk/platforms/android-34/android.jar:/Users/vedeekaparab/Library/Android/sdk/build-tools/33.0.1/core-lambda-stubs.jar"
+    javaSourceLevel="1.8"
+    compileTarget="android-34">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

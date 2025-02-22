@@ -1,0 +1,11 @@
+# This is a generated file; do not edit or check into version control.
+cloud_firestore=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.4/
+cloud_firestore_web=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.4/
+firebase_analytics=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_analytics-11.4.3/
+firebase_analytics_web=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_analytics_web-0.5.10+9/
+firebase_auth=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_auth-5.5.0/
+firebase_auth_web=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_auth_web-5.14.0/
+firebase_core=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_core-3.12.0/
+firebase_core_web=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_core_web-2.21.0/
+firebase_storage=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_storage-12.4.3/
+firebase_storage_web=/Users/vedeekaparab/.pub-cache/hosted/pub.dev/firebase_storage_web-3.10.10/

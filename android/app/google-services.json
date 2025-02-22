@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "92319697135",
+    "project_id": "playercollector-724d2",
+    "storage_bucket": "playercollector-724d2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:92319697135:android:1e0c5665358a26ab8a731a",
+        "android_client_info": {
+          "package_name": "com.example.player_collector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCULOzZ2NkCHMolRo1OauufkTfJShIsr2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,4 @@
+#Sat Feb 22 21:09:24 IST 2025
+base.0=/Users/vedeekaparab/Desktop/player_collector/build/app/intermediates/dex/release/minifyReleaseWithR8/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

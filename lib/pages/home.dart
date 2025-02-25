@@ -147,6 +147,7 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
+        
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore.collection('activities')

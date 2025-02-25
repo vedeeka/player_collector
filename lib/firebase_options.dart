@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
 /// Example:
@@ -15,6 +16,7 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
@@ -38,6 +40,11 @@ class DefaultFirebaseOptions {
           'DefaultFirebaseOptions are not supported for this platform.',
         );
     }
+
+
+
+
+    
   }
 
   static const FirebaseOptions web = FirebaseOptions(
@@ -85,4 +92,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'playercollector-724d2.firebasestorage.app',
     measurementId: 'G-Q2741HFYMG',
   );
+
+
+  
 }

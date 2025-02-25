@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:player_collector/pages/home.dart';
 import 'package:player_collector/signin/signup.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../firebase_options.dart';
 
-void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -51,6 +59,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -70,6 +79,56 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
       curve: Curves.easeOutQuart,
     ));
     _animationController.forward();
+  }
+
+  Future<void> _signIn() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      try {
+        // Implement Firebase Authentication sign in
+        // Using Firebase Auth to sign in with email and password
+        // final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        //   email: _emailController.text.trim(),
+        //   password: _passwordController.text,
+        // );
+        
+        // If successful, navigate to home page
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Signing in...'),
+            backgroundColor: const Color(0xFF9C27B0),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      } catch (e) {
+        // Handle errors like invalid credentials, user not found, etc.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -240,7 +299,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
                                     alignment: Alignment.centerRight,
                                     child: TextButton(
                                       onPressed: () {
-                                        // Handle forgot password
+                                        // Handle forgot password with Firebase
                                       },
                                       style: TextButton.styleFrom(
                                         foregroundColor: const Color(0xFF9C27B0),
@@ -267,24 +326,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
                                       ],
                                     ),
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        if (_formKey.currentState!.validate()) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: const Text('Signing in...'),
-                                              backgroundColor: const Color(0xFF9C27B0),
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                            ),
-                                          );
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) =>  HomePage()),
-                                          );
-                                        }
-                                      },
+                                      onPressed: _isLoading ? null : _signIn,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         foregroundColor: Colors.white,
@@ -294,14 +336,16 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
                                           borderRadius: BorderRadius.circular(15),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'SIGN IN',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          letterSpacing: 1.5,
+                                      child: _isLoading 
+                                        ? const CircularProgressIndicator(color: Colors.white)
+                                        : const Text(
+                                          'SIGN IN',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            letterSpacing: 1.5,
+                                          ),
                                         ),
-                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 24),
@@ -316,7 +360,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
                                         onPressed: () {
                                           Navigator.push(
                                             context,
-                                            MaterialPageRoute(builder: (context) =>  SignUpPage()),
+                                            MaterialPageRoute(builder: (context) => SignUpPage()),
                                           );
                                         },
                                         style: TextButton.styleFrom(

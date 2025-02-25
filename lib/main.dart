@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:player_collector/firbase_authentication.dart';
+import 'package:player_collector/firebase_wrap.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 

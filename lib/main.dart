@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:player_collector/firebase_wrap.dart';
+import 'package:player_collector/signin/signin.dart'; // Adjust this import based on your file structure
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
         ),
       ),
-      home: const AuthWrapper(),
+      home: const SignInPage(),
     );
   }
 }

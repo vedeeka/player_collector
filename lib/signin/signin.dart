@@ -1,46 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:player_collector/pages/home.dart';
 import 'package:player_collector/signin/signup.dart';
-import 'package:firebase_core/firebase_core.dart';
-import '../firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-}
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // Get current user
+  User? get currentUser => _auth.currentUser;
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sign In',
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-        fontFamily: 'Poppins',
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15.0),
-            borderSide: const BorderSide(color: Color(0xFF9C27B0), width: 2.0),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15.0),
-            borderSide: BorderSide(color: Colors.grey.shade200),
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.9),
-          contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-        ),
-      ),
-      home: const SignInPage(),
-    );
+  // Auth state changes stream
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // Sign in with email and password
+  Future<UserCredential> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Register with email and password
+  Future<UserCredential> createUserWithEmailAndPassword(String email, String password) async {
+    try {
+      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  // Password reset
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Handle Firebase Auth exceptions with user-friendly messages
+  Exception _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return Exception('No user found with this email.');
+      case 'wrong-password':
+        return Exception('Incorrect password.');
+      case 'email-already-in-use':
+        return Exception('This email is already registered.');
+      case 'weak-password':
+        return Exception('The password provided is too weak.');
+      case 'invalid-email':
+        return Exception('The email address is not valid.');
+      case 'operation-not-allowed':
+        return Exception('Operation not allowed.');
+      case 'too-many-requests':
+        return Exception('Too many requests. Try again later.');
+      default:
+        return Exception('An unexpected error occurred: ${e.message}');
+    }
   }
 }
 
@@ -56,10 +87,10 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isObscured = true;
+  bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -88,17 +119,19 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
       });
       
       try {
-        // Implement Firebase Authentication sign in
-        // Using Firebase Auth to sign in with email and password
-        // final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        //   email: _emailController.text.trim(),
-        //   password: _passwordController.text,
-        // );
+        // Use the AuthService to sign in
+        final authService = AuthService();
+        await authService.signInWithEmailAndPassword(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
         
         // If successful, navigate to home page
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Signing in...'),
+            content: const Text('Signed in successfully!'),
             backgroundColor: const Color(0xFF9C27B0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -112,7 +145,9 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
           MaterialPageRoute(builder: (context) => HomePage()),
         );
       } catch (e) {
-        // Handle errors like invalid credentials, user not found, etc.
+        // Handle errors
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
@@ -124,9 +159,11 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
           ),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -300,6 +337,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
                                     child: TextButton(
                                       onPressed: () {
                                         // Handle forgot password with Firebase
+                                        _showForgotPasswordDialog();
                                       },
                                       style: TextButton.styleFrom(
                                         foregroundColor: const Color(0xFF9C27B0),
@@ -393,6 +431,78 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
     );
   }
 
+  // Add a method to handle the forgot password functionality
+  void _showForgotPasswordDialog() {
+    final TextEditingController resetEmailController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: resetEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              hintText: 'Enter your email address',
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              // You can add more email validation if needed
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context);
+                try {
+                  final authService = AuthService();
+                  await authService.resetPassword(resetEmailController.text.trim());
+                  if (!mounted) return;
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Password reset email sent. Check your inbox.'),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('RESET'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -401,4 +511,3 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
     super.dispose();
   }
 }
-

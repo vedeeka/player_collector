@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../firebase_options.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -14,8 +20,13 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
+  bool _agreeToTerms = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  
+  // Firebase Auth instance
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -55,48 +66,142 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     });
   }
 
-  void _processSignUp() {
-    if (_formKey.currentState!.validate()) {
+  // Email/Password Sign Up
+  Future<void> _signUpWithEmailPassword() async {
+    if (_formKey.currentState!.validate() && _agreeToTerms) {
       setState(() {
         _isLoading = true;
       });
 
-      // Simulate network delay
-      Future.delayed(Duration(seconds: 2), () {
+      try {
+        // Create user account
+        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        // Save additional user information to Firestore
+        await _saveUserData(userCredential.user!.uid);
+
+        // Send email verification
+        await userCredential.user!.sendEmailVerification();
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show success dialog
+        _showSuccessDialog();
+      } on FirebaseAuthException catch (e) {
         setState(() {
           _isLoading = false;
         });
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Account created successfully!'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        String errorMessage = 'An error occurred during sign up';
+        if (e.code == 'weak-password') {
+          errorMessage = 'The password provided is too weak';
+        } else if (e.code == 'email-already-in-use') {
+          errorMessage = 'An account already exists for this email';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'Please provide a valid email address';
+        }
         
-        // Navigate to next screen or show success dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Welcome Aboard!'),
-              content: Text('Your account has been created successfully. Please verify your email to continue.'),
-              actions: [
-                TextButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    // Here you would typically navigate to the login screen
-                    // Navigator.of(context).pushReplacementNamed('/login');
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      });
+        _showErrorDialog(errorMessage);
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorDialog('An unexpected error occurred: ${e.toString()}');
+      }
+    } else if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please agree to the Terms of Service and Privacy Policy'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
+  }
+
+  // Google Sign In
+
+
+  // Facebook Sign In
+  
+  
+  // Save user data to Firestore
+  Future<void> _saveUserData(
+    String uid, 
+    [String? name, String? email, String? provider]
+  ) async {
+    final userData = {
+      'name': name ?? _nameController.text.trim(),
+      'email': email ?? _emailController.text.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastLogin': FieldValue.serverTimestamp(),
+      'authProvider': provider ?? 'email',
+    };
+
+    await _firestore.collection('users').doc(uid).set(userData);
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Account Created!'),
+          content: Text(
+            'Your account has been created successfully. Please check your email to verify your account before logging in.',
+          ),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Navigate to login screen
+                // Navigator.of(context).pushReplacementNamed('/login');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToHome() {
+    // Here you would navigate to your home screen
+    // Navigator.of(context).pushReplacementNamed('/home');
+    
+    // For now, just show a success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Login successful!'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -125,6 +230,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                     TextButton(
                       onPressed: () {
                         // Navigate to login
+                        // Navigator.of(context).pushReplacementNamed('/login');
                       },
                       child: Text(
                         'Log In',
@@ -322,8 +428,12 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                           Row(
                             children: [
                               Checkbox(
-                                value: true,
-                                onChanged: (bool? value) {},
+                                value: _agreeToTerms,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    _agreeToTerms = value ?? false;
+                                  });
+                                },
                                 activeColor: primaryColor,
                               ),
                               Expanded(
@@ -356,7 +466,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                           SizedBox(height: 24),
                           // Sign Up Button
                           ElevatedButton(
-                            onPressed: _isLoading ? null : _processSignUp,
+                            onPressed: _isLoading ? null : _signUpWithEmailPassword,
                             child: _isLoading
                                 ? SizedBox(
                                     height: 20,
@@ -409,28 +519,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                           ],
                         ),
                         SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildSocialButton(
-                              icon: Icons.g_mobiledata,
-                              color: Colors.red,
-                              onPressed: () {},
-                            ),
-                            SizedBox(width: 16),
-                            _buildSocialButton(
-                              icon: Icons.facebook,
-                              color: Colors.blue.shade800,
-                              onPressed: () {},
-                            ),
-                            SizedBox(width: 16),
-                            _buildSocialButton(
-                              icon: Icons.apple,
-                              color: Colors.black,
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
+
                       ],
                     ),
                   ),
@@ -474,4 +563,11 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       ),
     );
   }
+}
+
+// Add this to your main.dart file or wherever you initialize Firebase
+Future<void> initializeFirebase() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 }

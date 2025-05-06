@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-
+import '../pages/map_picker.dart';
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -10,6 +10,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _activityController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -52,16 +53,27 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _locationController,
-                  decoration: InputDecoration(
-                    labelText: "Location",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.location_on),
-                  ),
-                ),
+TextField(
+  controller: _locationController,
+  readOnly: true,
+  onTap: () async {
+    final pickedLocation = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MapPicker()),
+    );
+    if (pickedLocation != null) {
+      _locationController.text = pickedLocation;
+    }
+  },
+  decoration: InputDecoration(
+    labelText: "Location (Tap to select)",
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    prefixIcon: const Icon(Icons.location_on),
+  ),
+),
+
                 const SizedBox(height: 12),
                 TextField(
                   controller: _peopleNeededController,

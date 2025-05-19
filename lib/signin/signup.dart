@@ -16,6 +16,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+    final TextEditingController _editaddress = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -49,6 +50,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     _animationController.dispose();
     _nameController.dispose();
     _emailController.dispose();
+    _editaddress.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -75,9 +77,22 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
       try {
         // Create user account
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+        );
+
+        // Optionally update the user's display name
+        await userCredential.user!.updateDisplayName(_nameController.text.trim());
+
+        // Save additional user information—including address—to Firestore
+        await _saveUserData(
+          userCredential.user!.uid,
+          _nameController.text.trim(),
+          _emailController.text.trim(),
+          'email',
+          _editaddress.text.trim(), // New address field
         );
 
         // Save additional user information to Firestore
@@ -133,11 +148,12 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   // Save user data to Firestore
   Future<void> _saveUserData(
     String uid, 
-    [String? name, String? email, String? provider]
+    [String? name, String? email, String? provider, String? address]
   ) async {
     final userData = {
       'name': name ?? _nameController.text.trim(),
       'email': email ?? _emailController.text.trim(),
+      'address': address ?? _editaddress.text.trim(),
       'createdAt': FieldValue.serverTimestamp(),
       'lastLogin': FieldValue.serverTimestamp(),
       'authProvider': provider ?? 'email',
@@ -306,7 +322,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                               }
                               return null;
                             },
-                          ),
+                          ), SizedBox(height: 16),
                           SizedBox(height: 16),
                           // Email field
                           TextFormField(
@@ -338,6 +354,35 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                               if (!emailRegex.hasMatch(value)) {
                                 return 'Please enter a valid email address';
                               }
+                              return null;
+                            },
+                          ), SizedBox(height: 16),
+                           TextFormField(
+                            controller: _editaddress,
+                            keyboardType: TextInputType.multiline,
+                            decoration: InputDecoration(
+                              labelText: 'Address',
+                              prefixIcon: Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: primaryColor, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your address';
+                              }
+                           
                               return null;
                             },
                           ),

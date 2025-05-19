@@ -16,7 +16,8 @@ class AuthWrapper extends StatelessWidget {
           if (user == null) {
             return const SignInPage();
           }
-          return const HomePage();
+          final String email = user.displayName ?? '';
+          return HomePage(email: email);
         }
         
         // While waiting for the authentication state, show a loading indicator

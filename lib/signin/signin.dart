@@ -142,7 +142,7 @@ class _SignInPageState extends State<SignInPage> with SingleTickerProviderStateM
         
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(email: _emailController.text.trim())),
         );
       } catch (e) {
         // Handle errors

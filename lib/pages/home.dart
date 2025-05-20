@@ -12,6 +12,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends StatefulWidget {
+  
   final String email; // This is passed but not directly used in HomePage state
   const HomePage({Key? key, required this.email}) : super(key: key);
 
@@ -160,7 +161,7 @@ class LocationPickerSheet extends StatelessWidget {
 
   const LocationPickerSheet({super.key, required this.onLocationSelected});
 
-  Future<void> _handleGetCurrentLocation(BuildContext context) async {
+  Future<Position> _handleGetCurrentLocation(BuildContext context) async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -171,7 +172,7 @@ class LocationPickerSheet extends StatelessWidget {
         const SnackBar(content: Text('Location services are disabled. Please enable them in settings.')),
       );
       onLocationSelected("Location services disabled"); // Provide feedback
-      return;
+    
     }
 
     // 2. Check for permissions
@@ -183,9 +184,10 @@ class LocationPickerSheet extends StatelessWidget {
           const SnackBar(content: Text('Location permissions were denied.')),
         );
         onLocationSelected("Permission denied"); // Provide feedback
-        return;
+       
       }
     }
+   
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,62 +196,11 @@ class LocationPickerSheet extends StatelessWidget {
       );
       onLocationSelected("Permission denied forever"); // Provide feedback
       Geolocator.openAppSettings(); // Optionally open app settings
-      return;
+    
     }
 
-    // 3. When we reach here, permissions are granted (or were already granted).
-    try {
-      // Show a loading indicator if you want, before this call
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fetching current location...')),
-      );
+  return await Geolocator.getCurrentPosition();
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 20), // Timeout after 20 seconds
-      );
-
-      final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-      if (placemarks.isNotEmpty) {
-        final place = placemarks.first;
-        String name = place.name ?? '';
-        String street = place.thoroughfare ?? '';
-        String subLocality = place.subLocality ?? '';
-        String locality = place.locality ?? ''; // City
-        
-        List<String> parts = [];
-        if (name.isNotEmpty && name != street && !street.contains(name)) parts.add(name);
-        if (street.isNotEmpty) parts.add(street);
-        if (subLocality.isNotEmpty && subLocality != locality) parts.add(subLocality);
-        if (locality.isNotEmpty) parts.add(locality);
-
-        String locationName = parts.where((p) => p.isNotEmpty).join(', ');
-        if (locationName.isEmpty) {
-          locationName = "Current Location (details unavailable)";
-           if (locality.isNotEmpty) locationName = locality;
-           else if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) locationName = place.administrativeArea!;
-        }
-
-        onLocationSelected(locationName);
-      } else {
-        onLocationSelected("Could not determine address at current location");
-      }
-    } on TimeoutException catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Getting location timed out. Please try again or select on map.')),
-      );
-      onLocationSelected("Location timeout");
-    } on PlatformException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error getting location: ${e.message}. Ensure GPS is on and you have a clear view of the sky.')),
-      );
-      onLocationSelected("Error: ${e.code}");
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An unexpected error occurred: $e')),
-      );
-      onLocationSelected("Error   $e ");
-    }
   }
 
   @override
@@ -259,9 +210,12 @@ class LocationPickerSheet extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.my_location),
           title: const Text("Use Current Location"),
-          onTap: () async {
-            Navigator.pop(context); // Pop the sheet first
-            await _handleGetCurrentLocation(context);
+          onTap: () {
+             _handleGetCurrentLocation(context).then((value) {
+              print('${value.latitude}');
+               
+               Navigator.pop(context);
+            });
           },
         ),
         ListTile(
@@ -283,6 +237,7 @@ class LocationPickerSheet extends StatelessWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late String lat;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _activityController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();

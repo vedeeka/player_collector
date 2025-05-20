@@ -2,22 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(ProfileApp());
-}
-
-class ProfileApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Profile Page',
-      home: ProfilePage(name: 'kiya'), // pass userId here
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
 
 class ProfilePage extends StatelessWidget {
   final String name;
@@ -35,8 +19,8 @@ class ProfilePage extends StatelessWidget {
     return Profile(
       name: data['name'],
       email: data['email'],
-      about: data['about'],
-      imageUrl: data['imageUrl'],
+     
+
     );
   }
 
@@ -61,10 +45,7 @@ class ProfilePage extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: NetworkImage(profile.imageUrl),
-                  ),
+                 
                   SizedBox(height: 20),
                   Text(
                     profile.name,
@@ -77,17 +58,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 20),
                   Divider(),
-                  SizedBox(height: 20),
-                  Text(
-                    'About Me',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    profile.about,
-                    style: TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
+               
                   Spacer(),
                   ElevatedButton(
                     onPressed: () {
@@ -116,13 +87,11 @@ class ProfilePage extends StatelessWidget {
 class Profile {
   final String name;
   final String email;
-  final String about;
-  final String imageUrl;
+
 
   Profile({
     required this.name,
     required this.email,
-    required this.about,
-    required this.imageUrl,
+
   });
 }

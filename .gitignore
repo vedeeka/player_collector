@@ -1,0 +1,21 @@
+# Flutter/Dart related
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Android related
+android/local.properties
+android/app/debug.keystore
+android/.gradle/
+android/build/
+android/app/build/
+
+# iOS related
+ios/Flutter/.symlinks
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# Web related
+web/output/
